@@ -1,0 +1,45 @@
+name: Build BadSuccessor (fork)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: windows-latest   # use Windows runner just in case Windows-only APIs are used
+    steps:
+      - name: Check out fork
+        uses: actions/checkout@v4
+
+      - name: Show environment
+        run: |
+          dotnet --info
+          systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+
+      - name: Setup .NET (8 LTS)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            7.0.x
+
+      - name: Restore
+        run: dotnet restore .\BadSuccessor.sln
+
+      - name: Build (Release)
+        run: dotnet build .\BadSuccessor.sln -c Release --no-restore
+
+      - name: Publish single-file exe (win-x64)
+        run: >
+          dotnet publish .\BadSuccessor\BadSuccessor.csproj
+          -c Release -r win-x64 --self-contained false
+          -p:PublishSingleFile=true -p:PublishTrimmed=false
+          -o .\publish\win-x64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-win-x64
+          path: publish/win-x64/**
+          if-no-files-found: error
