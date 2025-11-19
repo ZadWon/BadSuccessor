@@ -1,9 +1,7 @@
-name: Build BadSuccessor (fork)
+name: Build BadSuccessor (net461)
 
 on:
   workflow_dispatch: {}
-  push:
-    branches: [ main, master ]
 
 jobs:
   build:
@@ -15,35 +13,17 @@ jobs:
           fetch-depth: 1
           submodules: true
 
-      # Install .NET Framework 4.6.1 Targeting Pack
+      # Needed for net461 reference assemblies
       - name: Install .NET Framework 4.6.1 Developer Pack
-        run: |
-          choco install netfx-4.6.1-devpack -y --no-progress
+        run: choco install netfx-4.6.1-devpack -y --no-progress
         shell: powershell
 
-      - name: Setup .NET SDKs
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            8.0.x
-            7.0.x
+      - name: Build with dotnet (Release)
+        run: dotnet build .\BadSuccessor.sln -c Release
 
-      - name: Restore
-        run: dotnet restore .\BadSuccessor.sln
-
-      - name: Build (Release)
-        run: dotnet build .\BadSuccessor.sln -c Release --no-restore
-
-      - name: Publish single-file exe (win-x64)
-        run: >
-          dotnet publish .\BadSuccessor\BadSuccessor.csproj
-          -c Release -r win-x64 --self-contained false
-          -p:PublishSingleFile=true -p:PublishTrimmed=false
-          -o .\publish\win-x64
-
-      - name: Upload artifact
+      - name: Upload built binaries
         uses: actions/upload-artifact@v4
         with:
-          name: publish-win-x64
-          path: publish/win-x64/**
+          name: BadSuccessor-Release
+          path: BadSuccessor\bin\Release\**
           if-no-files-found: error
