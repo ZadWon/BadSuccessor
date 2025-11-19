@@ -7,17 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest   # use Windows runner just in case Windows-only APIs are used
+    runs-on: windows-latest
     steps:
-      - name: Check out fork
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ibaiC/BadSuccessor
+          fetch-depth: 1
+          submodules: true
 
-      - name: Show environment
+      # Install .NET Framework 4.6.1 Targeting Pack
+      - name: Install .NET Framework 4.6.1 Developer Pack
         run: |
-          dotnet --info
-          systeminfo | findstr /B /C:"OS Name" /C:"OS Version"
+          choco install netfx-4.6.1-devpack -y --no-progress
+        shell: powershell
 
-      - name: Setup .NET (8 LTS)
+      - name: Setup .NET SDKs
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
